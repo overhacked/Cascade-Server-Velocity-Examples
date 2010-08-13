@@ -1,0 +1,14 @@
+<system-data-structure>
+  <group identifier="contact" label="Contact Information">
+    <text identifier="contact-name" label="Contact Name" required="true"/>
+    <text identifier="contact-email" label="Contact Email" multiple="true" maximum-number="3" required="true" regular-expression="(\w[-._\w]*\w@\w[-._\w]*\w\.\w{2,3})" input-data-format="address@email.com"/>
+  </group>
+  <group identifier="main-content" label="Article Content">
+    <text wysiwyg="true" identifier="body-paragraph" label="Article Text" wysiwyg-toolbar-remove="insert image,insert table,html view,"/>
+    <asset type="file" identifier="image" label="Article Image"/>
+    <text type="dropdown" identifier="image-placement" label="Image Placement" default="Left">
+      <dropdown-item value="Left"/>
+      <dropdown-item value="Right"/>
+    </text>
+  </group>
+</system-data-structure>
