@@ -1,0 +1,50 @@
+## get the page section ID, as specified in the calling-page's data definition
+#set ( $pageSectionID = $_XPathTool.selectSingleNode($contentRoot, "/system-index-block/calling-page/system-page/system-data-structure/section-id") )
+
+## get the page parent section ID, as specified in the calling-page's data definition
+#set ( $parentSectionIDGroup = $_XPathTool.selectSingleNode($contentRoot, "/system-index-block/calling-page/system-page/system-data-structure/parent-section-ids") )
+
+## if a section ID is provided, search for the matching curriculum data in our XML data dump
+#if ( $pageSectionID ) 
+
+	## find the <section> node whose ID matches the provided page section ID from the calling-page
+	#set ( $pageSection = $_XPathTool.selectSingleNode($contentRoot, "//section[@id='${pageSectionID.text}']") )
+
+	## get the main content of the matching <section> node
+	#set ( $pageContent = $pageSection.getChild("content") )
+	## get any child sections of the matching <section> node
+	#set ( $childSections = $pageSection.getChildren("section") )
+
+	<div id="course_info_block">
+
+	## output main section content, if any
+	#if ( $pageContent )
+		$_SerializerTool.serialize($pageContent, false)
+	#end
+
+    ## deal with any parent section IDs, if specified
+	#if($parentSectionIDGroup)
+            #set ( $parentSectionID = $parentSectionIDGroup.getChildren("parent-section-id") )
+            #foreach ( $PS in $parentSectionID)
+                #set ( $parSecXPath = "//section[@id='${PS.text}']" )
+                #set ( $PSSection = $_XPathTool.selectSingleNode($contentRoot, $parSecXPath) )
+                #set ( $PSPageContent = $PSSection.getChild("content") )
+				## if a parent ID is specified, that means that the parent's content should be 
+				## displayed HERE, as the parent does not have it's own separate course page in the CMS
+                #if ( $PSPageContent )
+                  $_SerializerTool.serialize($PSPageContent, false)
+                #end
+            #end
+    #end
+
+	## output all child sections of the matching <section> node
+	#foreach ( $child in $childSections )
+		#set ( $childContent = $child.getChild("content") )
+		#if ( $childContent )
+			$_SerializerTool.serialize($childContent, false)
+		#end
+	#end
+
+	</div>
+	
+#end
