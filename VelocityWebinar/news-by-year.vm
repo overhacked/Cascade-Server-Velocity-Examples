@@ -1,0 +1,39 @@
+## set a variable containing the archive-year data from calling-page
+#set ( $archiveYear = $_XPathTool.selectSingleNode($contentRoot,"//calling-page/system-page/dynamic-metadata[name = 'archive-year']/value") )
+
+## get a list of all articles from the index block
+#set ( $articles = $_XPathTool.selectNodes($contentRoot,"/system-index-block/system-page[not(contains(path, '_internal'))]") )
+
+<h2>
+	News By Year: ${archiveYear.text}
+</h2>
+
+## sort all the news articles
+## 1) start-date
+## 2) end-date
+## 3) alphabetically by title
+$_SortTool.addSortCriterion("start-date","en","number","descending","upper-first")
+$_SortTool.addSortCriterion("end-date","en","number","descending","upper-first")
+$_SortTool.addSortCriterion("title","en","text","ascending","upper-first")
+
+$_SortTool.sort($articles)
+
+## output all the article links
+## loop through all articles & output links
+#foreach ( $article in $articles )
+	## need to get display text & link information
+	#set ( $displayText = $_SerializerTool.serialize($article.getChild("title"),true) )
+	#set ( $url = $article.getChild("path").text )
+	## first get a date object based on start-date timestamp
+	#set ( $startDate = $_DateTool.getDate($article.getChild("start-date").value) )
+	## generate formatted date text
+	#set ( $dateText = $_DateTool.format("MMMM dd, yyyy", $startDate) )
+	#set ( $articleYear = $_DateTool.format("yyyy",$startDate) )
+	
+	## verify that the article is in the selected archive year before outputting
+	#if ( $articleYear == $archiveYear.text )
+		<p>
+			<a href="${url}">${displayText}</a> (${dateText})
+		</p>
+	#end
+#end

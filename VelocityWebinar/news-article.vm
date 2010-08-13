@@ -1,0 +1,94 @@
+#*
+	macro to render a comma-separated list (in an HTML <p>) of all
+	categories associated with a particular article -- as represented by
+	the provided $categories List
+	
+	note:  macros should be defined at the beginning of your script
+*#
+#macro ( showCategories $categories )
+	#set ( $count = 1 )
+	## begin the HTML <p>, along with some intro text
+	<p style="float:right;">
+		<em>(News Categories: 
+		## loop through the provided List of categories
+		#foreach ( $cat in $categories )
+			## use the $_SerializerTool to safely enscape any special characters that might be
+			## present in the category text
+			#set ( $catText = $_SerializerTool.serialize($cat, true) )
+			## if there are still more categories remaining in the List, append a comma
+			#if ( $count < $categories.size() )
+				#set ( $catText = $catText + ", " )
+			#end
+			## output the category text
+			${catText}
+			#set ( $count = $count + 1 )
+		#end
+		)</em>
+	</p> ## close the HTML <p>
+	<div style="clear:both;"/>
+#end
+
+## get the system-page element representing the current news article
+#set ( $article = $_XPathTool.selectSingleNode($contentRoot, "//system-page[@current]") )
+## get the article's contact info data group (from the data definition)
+#set ( $contact = $article.getChild("system-data-structure").getChild("contact") )
+## get the article's main content data group (from the data definition)
+#set ( $content = $article.getChild("system-data-structure").getChild("main-content") )
+
+## get the contact name from the $contact data element (defined above), use the $_SerializerTool to safely
+## escape any special characters
+#set ( $contactName = $_SerializerTool.serialize($contact.getChild("contact-name"), true) )
+
+## output contact info
+<p>
+	For additional information, contact:<br/>
+	## output contact name
+	${contactName}
+	## loop through all provided contact emails & output each on a new line
+	#foreach ( $email in $contact.getChildren("contact-email") )
+		#set ( $addy = $_SerializerTool.serialize($email, true) )
+		<br/>$addy
+	#end
+</p>
+
+## execute the #showCategories() macro to output all associated news categories
+## use $_XPathTool to select all 'category' dynamic metadata values from the current $article
+#showCategories ( $_XPathTool.selectNodes($article, "//dynamic-metadata[name = 'category']/value") )
+
+## output the article title (from 'title' wired metadata field)
+<h2>
+	$_SerializerTool.serialize($article.getChild("title"), true)
+</h2>
+
+## convert the 'start-date' metadata value from a timestamp to a formatted date string
+## first, get a Date object representing the start date, using the $_DateTool
+#set ( $startDate = $_DateTool.getDate($article.getChild("start-date").value) )
+## now, use the $_DateTool to generate a formatted date string based on the provided Date object
+#set ( $dateString = $_DateTool.format("MM.dd.yyyy", $startDate) )
+
+## output the formatted date text
+<p><em>(${dateString})</em></p>
+
+## determine whether an article image was chosen, based on the value of the /image/path element
+#set ($imgPath = $content.getChild("image").getChild("path").value )
+
+## if $imgPath = '/' then no image was selected, so just output the article text
+#if ( $imgPath == "/" )
+	<div>
+		$_SerializerTool.serialize($content.getChild("body-paragraph"), true)
+	</div>
+## otherwise, an image was selected, so output both the image & article text
+#else
+	## placement of the image is determined by the 'image-placement' data definition element
+	## pre-defined CSS classes have been written to correspond to these 'image-placement' values,
+	## using the 'image-placment' value as a suffix to the specific CSS class
+	#set ( $placementSuffix = $content.getChild("image-placement").value )
+	
+	## output image & text divs with the appropriate CSS class designations
+	<div id="article-image" class="image${placementSuffix}">
+		<img src="${imgPath}"/>
+	</div>
+	<div id="article" class="image${placementSuffix}">
+		$_SerializerTool.serialize($content.getChild("body-paragraph"), true)
+	</div>
+#end
