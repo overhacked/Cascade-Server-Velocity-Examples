@@ -1,0 +1,55 @@
+#*
+	Display folder(s) of files as HTML table
+	2010-April
+*#
+#set( $numCols = 4 )
+#macro( tableRows $items $cols )
+	#set( $rows = $items.size() / $cols )
+	#if( $rows * $cols < $items.size())
+		#set ( $rows = $rows + 1 )
+	#end
+	#foreach( $row in [1..$rows] )
+		<tr>
+			#foreach( $col in [1..$cols] )
+				#set( $i = ( ($col - 1) * $rows ) + ($row - 1) )
+				#if($i < $items.size() )
+					#set( $item = $items.get( $i ) )
+					<td>$_SerializerTool.serialize($_XPathTool.selectSingleNode($item,'dynamic-metadata[name="year"]/value'),true)-$_SerializerTool.serialize($_XPathTool.selectSingleNode($item,'dynamic-metadata[name="month"]/value'),true)</td>
+					<td><a href="$item.getChild('link').value" class="pdf-link"><span>PDF</span></a></td>
+				#else
+					<td colspan="2"> - </td>
+				#end
+			#end
+		</tr>
+	#end
+#end
+#macro( columnDesc )
+<colgroup span="2" align="center" valign="middle"></colgroup>
+#end
+#macro( headerCells )
+<th>Date</th><th>Download</th>
+#end
+
+#set( $files = $_XPathTool.selectNodes($contentRoot,'//system-file') )
+#if($files.isEmpty())
+	<p>No files found.</p>
+#else
+	$_SortTool.addSortCriterion('dynamic-metadata[name="year"]/value','','number','descending','')
+	$_SortTool.addSortCriterion('dynamic-metadata[name="month"]/value','','number','descending','')
+	$_SortTool.sort($files)
+	<table summary="Files available for download">
+		#foreach( $col in [1..$numCols] )
+			#columnDesc()
+		#end
+		<thead>
+			<tr>
+			#foreach( $col in [1..$numCols] )
+				#headerCells()
+			#end
+			</tr>
+		</thead>
+		<tbody>
+			#tableRows( $files $numCols )
+		</tbody>
+	</table>
+#end
