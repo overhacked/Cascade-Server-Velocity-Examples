@@ -29,7 +29,7 @@ $_SortTool.sort($expertIndexes)
 ## use JavaScript function to jump to specified aggregate page
 <script language="JavaScript">
 
-function browseExpertise(menu)
+var browseExpertise = function(menu)
 {
 	var gotoURL = menu.options[menu.selectedIndex].value;
 	if (gotoURL != "NONE")
@@ -38,12 +38,17 @@ function browseExpertise(menu)
 	}
 }
 
+document.onload = function() {
+  var menu = document.getElementById('expert-menu');
+  menu.onchange = browseExpertise;
+}
+
 </script>
 
 ## output menu in an <h4>
 <h4>Expert Area: 
 
-<select onChange="browseExpertise(this);">
+<select id="expert-menu">
 	<option value="NONE" selected="true">Browse by Expert Area...</option>
 	
 	## loop through all 'ArticleByExpertArea' pages & output their respective 'expert-areas' in the "Browse by..." menu
